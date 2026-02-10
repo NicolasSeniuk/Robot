@@ -1,18 +1,42 @@
 name: Build
+
 on:
   push:
     branches:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
+
 jobs:
-  sonarqube:
-    name: SonarQube
+  ci:
+    name: Robot Regression + SonarQube
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      # 1️⃣ Baixa o código do repositório
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
+
+      # 2️⃣ Configura o Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # 3️⃣ Instala Robot Framework + Browser
+      - name: Install Robot Framework and Browser Library
+        run: |
+          pip install robotframework robotframework-browser
+          rfbrowser init
+
+      # 4️⃣ Executa os testes de regressão
+      - name: Run Robot Regression Tests
+        run: |
+          robot -d results -i regression tests/
+
+      # 5️⃣ Executa análise do SonarQube (Quality Gate)
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
